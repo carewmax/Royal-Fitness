@@ -1,0 +1,76 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install packages
+        run: npm install
+
+      - name: Bundle scanner libraries for offline use
+        run: npm run vendor
+
+      - name: Create Android project
+        run: npx cap add android
+
+      - name: Allow camera (QR scanning, food photos, form videos)
+        run: |
+          M=android/app/src/main/AndroidManifest.xml
+          sed -i 's#</manifest>#    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n</manifest>#' $M
+          grep -n "CAMERA" $M
+
+      - name: App icon and splash screen
+        continue-on-error: true
+        run: >
+          npx capacitor-assets generate --android
+          --iconBackgroundColor '#0a0a09' --iconBackgroundColorDark '#0a0a09'
+          --splashBackgroundColor '#0a0a09' --splashBackgroundColorDark '#0a0a09'
+
+      - name: Copy web app into Android
+        run: npx cap sync android
+
+      - name: Build APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Name the APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk RoyalFitness.apk
+
+      - name: Keep APK as a build file
+        uses: actions/upload-artifact@v4
+        with:
+          name: RoyalFitness-apk
+          path: RoyalFitness.apk
+
+      - name: Publish APK on the Releases page
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Royal Fitness v1.0.${{ github.run_number }}
+          files: RoyalFitness.apk
+          body: |
+            Test build of the Royal Fitness Android app.
+            Download RoyalFitness.apk on an Android phone and open it. Allow "Install unknown apps" if asked.
