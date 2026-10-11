@@ -1,0 +1,20 @@
+{
+  "name": "royal-fitness-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Royal Fitness member app (Android) built with Capacitor",
+  "scripts": {
+    "vendor": "node -e \"const fs=require('fs');fs.mkdirSync('www/vendor',{recursive:true});fs.copyFileSync('node_modules/jsqr/dist/jsQR.js','www/vendor/jsQR.js');fs.copyFileSync('node_modules/qrcode-generator/qrcode.js','www/vendor/qrcode.js')\""
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/app": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "jsqr": "1.4.0",
+    "qrcode-generator": "1.4.4"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^7.0.0"
+  }
+}
